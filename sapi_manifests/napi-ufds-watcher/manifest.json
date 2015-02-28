@@ -1,0 +1,5 @@
+{
+    "name": "napi-ufds-watcher",
+    "path": "/opt/smartdc/napi/etc/watcher.json",
+    "post_cmd": "svcadm restart napi-ufds-watcher"
+}

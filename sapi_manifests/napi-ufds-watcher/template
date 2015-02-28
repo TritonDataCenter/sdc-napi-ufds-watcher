@@ -1,0 +1,38 @@
+{
+    "general": {
+        "concurrency": 10,
+        "pollInterval": 5000
+    },
+    "logLevel": "debug",
+    "napi": {
+        "url": "http://{{{NAPI_SERVICE}}}",
+        "connectTimeout": 1000,
+        "retry": {
+            "retries": 2
+        }
+    },
+    "defaults": {
+        "vlan": {
+            "name": "default",
+            "vlan_id": 2
+        },
+        "network": {
+            "name": "default",
+            "subnet": "192.168.128.0/22",
+            "provision_start_ip": "192.168.128.5",
+            "provision_end_ip": "192.168.131.250",
+            "gateway": "192.168.128.1",
+            "resolvers": {{{ext_resolvers}}},
+            "vlan_id": 2
+        }
+    },
+    "ufds": {
+        "url": "ldaps://{{{UFDS_SERVICE}}}",
+        "bindDN": "{{{ufds_ldap_root_dn}}}",
+        "bindPassword": "{{{ufds_ldap_root_pw}}}",
+        "cache": {
+            "size": 1000,
+            "expiry": 300
+        }
+    }
+}
