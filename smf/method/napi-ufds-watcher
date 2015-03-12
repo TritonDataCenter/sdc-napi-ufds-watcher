@@ -1,0 +1,32 @@
+#!/bin/bash
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+
+#
+# Copyright (c) 2014, Joyent, Inc.
+#
+
+set -o xtrace
+
+. /lib/svc/share/smf_include.sh
+
+PATH=/usr/sbin:/usr/bin; export PATH
+
+case "$1" in
+'start')
+    /usr/bin/ctrun -l child -o noorphan /opt/smartdc/napi/node/bin/node /opt/smartdc/napi/napi-ufds-watcher/main.js -f /opt/smartdc/napi/etc/watcher.json &
+    ;;
+
+'stop')
+    ;;
+
+*)
+    echo "Usage: $0 { start | stop }"
+    exit $SMF_EXIT_ERR_FATAL
+    ;;
+esac
+exit $SMF_EXIT_OK
+ d

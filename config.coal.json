@@ -5,7 +5,7 @@
     },
     "logLevel": "debug",
     "napi": {
-        "url": "http://{{{NAPI_SERVICE}}}",
+        "url": "http://10.99.99.10",
         "connectTimeout": 1000,
         "retry": {
             "retries": 2
@@ -22,14 +22,14 @@
             "provision_start_ip": "192.168.128.5",
             "provision_end_ip": "192.168.131.250",
             "gateway": "192.168.128.1",
-            "resolvers": {{{ext_resolvers}}},
+            "resolvers": ["8.8.8.8","8.8.4.4"],
             "vlan_id": 2
         }
     },
     "ufds": {
-        "url": "ldaps://{{{UFDS_SERVICE}}}",
-        "bindDN": "{{{ufds_ldap_root_dn}}}",
-        "bindCredentials": "{{{ufds_ldap_root_pw}}}",
+        "url": "ldaps://10.99.99.18",
+        "bindDN": "cn=root",
+        "bindCredentials": "secret",
         "cache": {
             "size": 1000,
             "expiry": 300

@@ -13,11 +13,15 @@
  */
 
 var assert = require('assert-plus');
+var ChangelogStream = require('./lib/changelog-stream');
 var fmt = require('util').format;
 var mod_bunyan = require('bunyan');
 var mod_dashdash = require('dashdash');
 var mod_path = require('path');
-var mod_watcher = require('./lib/watcher');
+var UfdsUserStream = require('./lib/ufds-user-stream');
+var util = require('util');
+var Writable = require('stream').Writable;
+
 
 
 
@@ -78,14 +82,57 @@ function main() {
         serializers: mod_bunyan.stdSerializers
     });
 
-    mod_watcher.create(conf, function (err, watcher) {
-        if (err) {
-            throw err;
-        }
+    // prefer single copies of clients?
+    // single queues for UFDS/portolan messages?
+    // create streams
+    // chageLogStream
+    // userFilterStream to filter out fabric-setup users
+    // portolan filter setup stream
+    // ufds update stream
+    // then pipe them all to eachother, and boom?
 
-        log.debug('watcher created');
-        watcher.watch();
+    // create stream, pipe to trivial writable that echos to stderr?
+
+    function TrivialStream(opts) {
+        Writable.call(this, {
+            objectMode: true
+        });
+    }
+    util.inherits(TrivialStream, Writable);
+    TrivialStream.prototype._write = function(thing) {
+        console.log("STREAMED A THING", util.inspect(thing));
+    };
+
+    var query = '(&(changetype=add)(targetdn=uuid=*)(targetdn=*ou=users, o=smartdc))'
+
+    // XXX sapi tunable.
+    conf.ufds.interval = 10000;
+
+    var cls = new ChangelogStream({
+        log: conf.log,
+        ufds: conf.ufds,
+        changenumber: 0,
+        query: query
     });
-}
 
+    var uus = new UfdsUserStream({
+        log: conf.log,
+        ufds: conf.ufds
+    });
+
+    var fss = new NapiFabricSetupStream({
+        log: conf.log,
+        napi: conf.napi,
+        defaults: conf.defaults
+    });
+
+    var uws = new UfdsFabricSetupStream({
+        log: conf.log,
+        ufds: conf.ufds
+    });
+
+    var ts = new TrivialStream();
+
+    var pipe = cls.pipe(uus).pipe(ts);
+}
 main();

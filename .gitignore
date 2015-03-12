@@ -1,1 +1,4 @@
 /node_modules
+/tmp
+/build
+/smf/manifests/napi-ufds-watcher.xml
