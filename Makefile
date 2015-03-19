@@ -52,7 +52,7 @@ include ./tools/mk/Makefile.smf.defs
 
 
 .PHONY: all
-all: $(SMF_MANIFESTS) | $(TAPE) $(REPO_DEPS) sdc-scripts
+all: $(SMF_MANIFESTS) | $(TAPE) $(REPO_DEPS)
 	$(NPM) install
 
 $(TAPE): | $(NPM_EXEC)

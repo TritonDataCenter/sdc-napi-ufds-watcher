@@ -26,10 +26,11 @@
             "vlan_id": 2
         }
     },
+    "datacenter_name": "coal",
     "ufds": {
         "url": "ldaps://10.99.99.18",
         "bindDN": "cn=root",
-        "bindCredentials": "secret",
+        "bindPassword": "secret",
         "cache": {
             "size": 1000,
             "expiry": 300
