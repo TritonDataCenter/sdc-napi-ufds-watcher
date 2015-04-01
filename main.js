@@ -229,9 +229,6 @@ function main() {
         var cnf = new ChangenumberFinishStream({
             log: conf.log
         });
-        cnf.on('checkpoint', function updateCheckpoint(cp) {
-            checkpoint = cp;
-        });
 
         var ts = new TrivialStream();
 
