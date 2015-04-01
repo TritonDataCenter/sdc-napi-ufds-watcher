@@ -3,7 +3,7 @@
         "concurrency": 10,
         "pollInterval": 5000
     },
-    "logLevel": "debug",
+    "logLevel": "info",
     "napi": {
         "url": "http://{{{NAPI_SERVICE}}}",
         "connectTimeout": 1000,
@@ -22,14 +22,15 @@
             "provision_start_ip": "192.168.128.5",
             "provision_end_ip": "192.168.131.250",
             "gateway": "192.168.128.1",
-            "resolvers": {{{ext_resolvers}}},
+            "resolvers": "{{{dns_resolvers}}}",
             "vlan_id": 2
         }
     },
+    "datacenter_name": "{{{datacenter_name}}}",
     "ufds": {
         "url": "ldaps://{{{UFDS_SERVICE}}}",
         "bindDN": "{{{ufds_ldap_root_dn}}}",
-        "bindCredentials": "{{{ufds_ldap_root_pw}}}",
+        "bindPassword": "{{{ufds_ldap_root_pw}}}",
         "cache": {
             "size": 1000,
             "expiry": 300
@@ -39,5 +40,7 @@
         },
         "interval": 10000
     },
+    "// set changenumber to override any persisted value": "comment",
+    {{#changenumber}}"changenumber": {{{changenumber}}},{{/changenumber}}
     "checkpointDn": "cn=replicator, datacenter={{{datacenter_name}}}, o=smartdc"
 }

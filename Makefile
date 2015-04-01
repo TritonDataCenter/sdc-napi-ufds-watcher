@@ -35,6 +35,14 @@ JSL_FILES_NODE   = $(JS_FILES)
 JSSTYLE_FILES	 = $(JS_FILES)
 JSSTYLE_FLAGS    = -o indent=4,doxygen,unparenthesized-return=0
 JSON_FILES  := package.json
+SMF_MANIFESTS_IN = smf/manifests/napi-ufds-watcher.xml.in
+
+NODE_PREBUILT_VERSION=v0.10.29
+ifeq ($(shell uname -s),SunOS)
+	NODE_PREBUILT_TAG=zone
+	# Allow building on a SmartOS image other than sdc-smartos@1.6.3.
+	NODE_PREBUILT_IMAGE=fd2cc906-8938-11e3-beab-4359c665ac99
+endif
 
 include ./tools/mk/Makefile.defs
 ifeq ($(shell uname -s),SunOS)
