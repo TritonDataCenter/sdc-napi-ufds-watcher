@@ -25,8 +25,10 @@ var vstream = require('vstream');
 var ChangelogStream = require('./lib/changelog-stream');
 var UfdsUserStream = require('./lib/ufds-user-stream');
 var UfdsFilterStream = require('./lib/ufds-filter-stream');
+var ChangenumberStartStream = require('./lib/changenumber-start-stream');
 var NapiFabricSetupStream = require('./lib/default-fabric-setup');
 var UfdsWriteStream = require('./lib/ufds-write-stream');
+var ChangenumberFinishStream = require('./lib/changenumber-finish-stream');
 var Writable = require('stream').Writable;
 
 
@@ -176,6 +178,12 @@ function main() {
         }
     });
 
+    var cns = ChangenumberStartStream({
+        log: conf.log,
+        ufds: conf.ufds,
+        checkpointDn: conf.checkpointDn
+    });
+
     // creates overlay network per config defaults, adds property to obj:
     // {
     //     defaultNetwork: UUID
@@ -185,6 +193,7 @@ function main() {
         napi: conf.napi,
         defaults: conf.defaults
     });
+    fss.on('failure', cms.fail);
 
     // updates dclocalconfig in UFDS to indicate we've set up an overlay.
     // updates obj.user.
@@ -193,11 +202,16 @@ function main() {
         ufds: ufdsClient,
         datacenter_name: conf.datacenter_name
     });
+    uws.on('failure', cms.fail);
+
+    var cnf = new ChangenumberFinishStream({
+        log: conf.log
+    });
 
     var ts = new TrivialStream();
 
     var altPipe = new vstream.PipelineStream({
-        streams: [cls, uus, ufs, fss, uws],
+        streams: [cls, uus, ufs, cms, fss, uws, cfs],
         streamOptions: { objectMode: true }
     });
 

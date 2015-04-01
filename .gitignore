@@ -4,3 +4,4 @@
 /smf/manifests/napi-ufds-watcher.xml
 /tests/data/staging-changelog.ldif
 /tests/data/staging-users.ldif
+npm-debug.log
