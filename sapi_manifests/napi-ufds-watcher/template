@@ -38,5 +38,6 @@
             "rejectUnauthorized": false
         },
         "interval": 10000
-    }
+    },
+    "checkpointDn": "cn=replicator, datacenter={{{datacenter_name}}}, o=smartdc"
 }

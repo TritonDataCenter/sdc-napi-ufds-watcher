@@ -39,5 +39,6 @@
             "rejectUnauthorized": false
         },
         "interval": 10000
-    }
+    },
+    "checkpointDn": "cn=replicator, datacenter=coal, o=smartdc"
 }
