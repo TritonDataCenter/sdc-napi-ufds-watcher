@@ -2,6 +2,6 @@
 /tmp
 /build
 /smf/manifests/napi-ufds-watcher.xml
-/tests/data/staging-changelog.ldif
-/tests/data/staging-users.ldif
+/test/data/staging-changelog.ldif
+/test/data/staging-users.ldif
 npm-debug.log
