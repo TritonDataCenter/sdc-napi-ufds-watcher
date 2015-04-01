@@ -13,7 +13,6 @@
  */
 
 var assert = require('assert-plus');
-// var DefaultFabricPipeline = require('./lib/default-fabric-pipeline');
 var mod_bunyan = require('bunyan');
 var mod_dashdash = require('dashdash');
 var mod_path = require('path');
@@ -23,56 +22,26 @@ var UFDS = require('ufds');
 var util = require('util');
 var vstream = require('vstream');
 
-// streams
+// pipeline
 var ChangelogStream = require('./lib/changelog-stream');
+var Checkpoint = require('./lib/checkpoint');
 var UfdsUserStream = require('./lib/ufds-user-stream');
 var UfdsFilterStream = require('./lib/ufds-filter-stream');
 var ChangenumberStartStream = require('./lib/changenumber-start-stream');
 var NapiFabricSetupStream = require('./lib/default-fabric-setup');
 var UfdsWriteStream = require('./lib/ufds-write-stream');
 var ChangenumberFinishStream = require('./lib/changenumber-finish-stream');
-var Writable = require('stream').Writable;
-
 
 
 // --- Globals
 
-
-
 var ME = mod_path.basename(process.argv[1]);
+var query = '(&(changetype=add)(targetdn=uuid=*)' +
+    '(targetdn=*ou=users, o=smartdc))';
 
-
-function TrivialStream(opts) {
-    Writable.call(this, {
-        objectMode: true
-    });
-    if (opts && opts.func) {
-        this.func = opts.func;
-    }
-}
-util.inherits(TrivialStream, Writable);
-
-TrivialStream.prototype._write = function (thing) {
-    if (thing.foo && typeof (thing.foo) === 'function') {
-        thing.foo();
-    }
-    if (this.func) {
-        this.func(thing);
-    } else {
-        console.log('STREAMED A THING', util.inspect(thing));
-    }
-};
 
 // --- Exports
 
-/**
- * Instantiates streams to:
- *   1) stream the changelog
- *   2) get actual user objects from those changes
- *   3) filter out certain users
- *   4) set up a default overly vlan & network for the user
- *   5) record that we did that
- */
 function main() {
     var opts;
     var options = [
@@ -117,17 +86,12 @@ function main() {
         level: conf.logLevel || 'debug',
         serializers: sdcSerializers.extend(restifySerializers)
     });
-    // TODO sapi tunable? config addition?
-    conf.ufds.interval = 10000;
 
-    var query = '(&(changetype=add)(targetdn=uuid=*)' +
-        '(targetdn=*ou=users, o=smartdc))';
     var changenumber = 0;
-    var checkpoint = 0;
+    var checkpoint;
+    var streams;
 
-    // TODO - update opts here for retries, etc.
     var ufdsClient = new UFDS(conf.ufds);
-    // on first connect
     ufdsClient.once('connect', function () {
         conf.log.info('UFDS: connected');
 
@@ -155,9 +119,6 @@ function main() {
         conf.log.error(err, 'UFDS unable to connect');
     });
 
-
-    var streams;
-
     function closePipeline() {
         streams.forEach(function (stream) {
             if (stream.hasOwnProperty('close')) {
@@ -167,6 +128,28 @@ function main() {
     }
 
     function openPipeline() {
+        checkpoint = new Checkpoint({
+            log: conf.log,
+            ufdsClient: ufdsClient,
+            url: conf.ufds.url,
+            queries: [],
+            dn: conf.checkpointDn,
+            component: 'ufdsWatcher'
+        });
+        checkpoint.init(function (err, cn) {
+            conf.log.info({ changenumber: cn }, 'Initialized checkpoint');
+
+            if (conf.hasOwnProperty('changenumber')) {
+                changenumber = conf.changenumber;
+            } else {
+                changenumber = Math.max(cn, changenumber);
+            }
+            createPipeline();
+        });
+    }
+
+    function createPipeline() {
+
         // connects to local ufds & streams changelog entries,
         // emits changelogs of users & subusers
         var cls = new ChangelogStream({
@@ -187,29 +170,26 @@ function main() {
             ufds: ufdsClient
         });
 
-        // filters based on obj.user, does not alter objects.
+        // filters based on obj.user, no side-effects.
         var ufs = new UfdsFilterStream({
             log: conf.log,
             filter: function (user, cb) {
-                if (!user.dclocalconfig || !user.dclocalconfig.defaultFabricSetup) {
+                if (!user.dclocalconfig ||
+                    !user.dclocalconfig.defaultFabricSetup) {
                     return cb(null, true);
                 }
                 return cb(null, false);
             }
         });
 
+        // tracks changenumbers that we're going to attempt to process;
+        // binds markComplete function to the object.
         var cns = new ChangenumberStartStream({
             log: conf.log,
-            ufdsClient: ufdsClient,
-            url: conf.ufds.url,
-            checkpointDn: conf.checkpointDn,
-            component: 'ufdsWatcher'
+            checkpoint: checkpoint
         });
 
-        // creates overlay network per config defaults, adds property to obj:
-        // {
-        //     defaultNetwork: UUID
-        // }
+        // finds/creates a fabric vlan/overlay
         var fss = new NapiFabricSetupStream({
             log: conf.log,
             napi: conf.napi,
@@ -218,7 +198,6 @@ function main() {
         fss.on('failure', cns.fail);
 
         // updates dclocalconfig in UFDS to indicate we've set up an overlay.
-        // updates obj.user.
         var uws = new UfdsWriteStream({
             log: conf.log,
             ufds: ufdsClient,
@@ -226,11 +205,13 @@ function main() {
         });
         uws.on('failure', cns.fail);
 
+        // marks completed records
         var cnf = new ChangenumberFinishStream({
             log: conf.log
         });
-
-        var ts = new TrivialStream();
+        cnf.on('checkpoint', function updateCheckpoint(cp) {
+            changenumber = cp;
+        });
 
         streams = [cls, uus, ufs, cns, fss, uws, cnf];
         var altPipe = new vstream.PipelineStream({
@@ -241,11 +222,8 @@ function main() {
         altPipe.on('error', function (err) {
             conf.log.error({
                 err: err
-            }, 'Pipeline error. Restarting at changenumber %s.', checkpoint);
-
+            }, 'Pipeline error. Restarting at changenumber %s.', changenumber);
         });
-
-        altPipe.pipe(ts);
     }
 }
 main();

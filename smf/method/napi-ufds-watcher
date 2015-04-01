@@ -17,7 +17,7 @@ PATH=/usr/sbin:/usr/bin; export PATH
 
 case "$1" in
 'start')
-    /usr/bin/ctrun -l child -o noorphan /opt/smartdc/napi/node/bin/node /opt/smartdc/napi/napi-ufds-watcher/main.js -f /opt/smartdc/napi/etc/watcher.json &
+    /usr/bin/ctrun -l child -o noorphan /opt/smartdc/napi-ufds-watcher/build/node/bin/node /opt/smartdc/napi-ufds-watcher/main.js -f /opt/smartdc/napi-ufds-watcher/etc/config.json &
     ;;
 
 'stop')
