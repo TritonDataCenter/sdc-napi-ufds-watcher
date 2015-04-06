@@ -17,6 +17,7 @@ var assert = require('assert-plus');
 var mod_bunyan = require('bunyan');
 var mod_dashdash = require('dashdash');
 var mod_path = require('path');
+var UFDS = require('ufds');
 var util = require('util');
 var vstream = require('vstream');
 
@@ -119,11 +120,37 @@ function main() {
         '(targetdn=*ou=users, o=smartdc))';
     var changenumber = 0;
 
+    // TODO - update opts here for retries, etc.
+    var ufdsClient = new UFDS(conf.ufds);
+    // on first connect
+    ufdsClient.once('connect', function () {
+        conf.log.info('UFDS: connected');
+
+        ufdsClient.removeAllListeners('error');
+        ufdsClient.on('error', function (err) {
+            conf.log.error(err, 'UFDS: unexpected error');
+        });
+
+        ufdsClient.on('close', function () {
+            conf.log.warn('UFDS: disconnected');
+        });
+
+        ufdsClient.on('connect', function () {
+            conf.log.info('UFDS: reconnected');
+        });
+    });
+
+    ufdsClient.once('error', function (err) {
+        conf.log.error(err, 'UFDS unable to connect');
+    });
+
+
     // connects to local ufds & streams changelog entries,
     // emits changelogs of users & subusers
     var cls = new ChangelogStream({
         log: conf.log,
-        ufds: conf.ufds,
+        interval: conf.ufds.interval,
+        ufds: ufdsClient,
         changenumber: changenumber,
         query: query
     });
@@ -135,7 +162,7 @@ function main() {
     // }
     var uus = new UfdsUserStream({
         log: conf.log,
-        ufds: conf.ufds
+        ufds: ufdsClient
     });
 
     // filters based on obj.user, does not alter objects.
@@ -163,7 +190,7 @@ function main() {
     // updates obj.user.
     var uws = new UfdsWriteStream({
         log: conf.log,
-        ufds: conf.ufds,
+        ufds: ufdsClient,
         datacenter_name: conf.datacenter_name
     });
 
