@@ -47,9 +47,6 @@ function generateUser(fields) {
             objectclass: 'sdcperson'
         }
     }
-
-
-
     return user;
 }
 

@@ -193,7 +193,7 @@ function main() {
         napi: conf.napi,
         defaults: conf.defaults
     });
-    fss.on('failure', cms.fail);
+    fss.on('failure', cns.fail);
 
     // updates dclocalconfig in UFDS to indicate we've set up an overlay.
     // updates obj.user.
@@ -202,7 +202,7 @@ function main() {
         ufds: ufdsClient,
         datacenter_name: conf.datacenter_name
     });
-    uws.on('failure', cms.fail);
+    uws.on('failure', cns.fail);
 
     var cnf = new ChangenumberFinishStream({
         log: conf.log
@@ -211,7 +211,7 @@ function main() {
     var ts = new TrivialStream();
 
     var altPipe = new vstream.PipelineStream({
-        streams: [cls, uus, ufs, cms, fss, uws, cfs],
+        streams: [cls, uus, ufs, cns, fss, uws, cnf],
         streamOptions: { objectMode: true }
     });
 
