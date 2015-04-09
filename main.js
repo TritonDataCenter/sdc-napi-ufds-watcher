@@ -180,7 +180,7 @@ function main() {
 
     var cns = ChangenumberStartStream({
         log: conf.log,
-        ufds: conf.ufds,
+        ufds: ufdsClient,
         checkpointDn: conf.checkpointDn
     });
 
