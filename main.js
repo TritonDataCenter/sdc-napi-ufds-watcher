@@ -17,6 +17,8 @@ var assert = require('assert-plus');
 var mod_bunyan = require('bunyan');
 var mod_dashdash = require('dashdash');
 var mod_path = require('path');
+var restifySerializers = require('restify').bunyan.serializers;
+var sdcSerializers = require('sdc-bunyan-serializers');
 var UFDS = require('ufds');
 var util = require('util');
 var vstream = require('vstream');
@@ -113,7 +115,7 @@ function main() {
     conf.log = mod_bunyan.createLogger({
         name: 'napi-ufds-watcher',
         level: conf.logLevel || 'debug',
-        serializers: mod_bunyan.stdSerializers
+        serializers: sdcSerializers.extend(restifySerializers)
     });
     // TODO sapi tunable? config addition?
     conf.ufds.interval = 10000;
@@ -178,10 +180,12 @@ function main() {
         }
     });
 
-    var cns = ChangenumberStartStream({
+    var cns = new ChangenumberStartStream({
         log: conf.log,
-        ufds: ufdsClient,
-        checkpointDn: conf.checkpointDn
+        ufdsClient: ufdsClient,
+        url: conf.ufds.url,
+        checkpointDn: conf.checkpointDn,
+        component: 'ufdsWatcher'
     });
 
     // creates overlay network per config defaults, adds property to obj:

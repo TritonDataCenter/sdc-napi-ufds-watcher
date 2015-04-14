@@ -12,7 +12,10 @@
     "dashdash": "1.7.3",
     "ldapjs": "git+ssh://git@github.com/mcavage/node-ldapjs.git#91f523af87936e9fe09a23d73d42fc339e60d8c3",
     "ldap-filter": "0.2.0",
+    "node-uuid": "1.2.0",
+    "restify": "^2.8.4",
     "sdc-clients": "git+ssh://git@github.com:joyent/node-sdc-clients.git#121bd66",
+    "sdc-bunyan-serializers": "git+ssh://git@github.com:joyent/sdc-bunyan-serializers.git#cc78f27bf7",
     "ufds": "git+ssh://git@github.com:joyent/node-ufds.git#c7aa5635871aad7a630c897be2fcf059fed2e9dd",
     "vasync": "1.6.2",
     "vstream": "0.1.0"
