@@ -123,6 +123,7 @@ function main() {
     var query = '(&(changetype=add)(targetdn=uuid=*)' +
         '(targetdn=*ou=users, o=smartdc))';
     var changenumber = 0;
+    var checkpoint = 0;
 
     // TODO - update opts here for retries, etc.
     var ufdsClient = new UFDS(conf.ufds);
@@ -137,11 +138,15 @@ function main() {
 
         ufdsClient.on('close', function () {
             conf.log.warn('UFDS: disconnected');
+            closePipeline();
         });
 
         ufdsClient.on('connect', function () {
             conf.log.info('UFDS: reconnected');
+            openPipeline();
         });
+
+        openPipeline();
     });
 
     ufdsClient.once('error', function (err) {
@@ -149,111 +154,99 @@ function main() {
     });
 
 
-    // connects to local ufds & streams changelog entries,
-    // emits changelogs of users & subusers
-    var cls = new ChangelogStream({
-        log: conf.log,
-        interval: conf.ufds.interval,
-        ufds: ufdsClient,
-        changenumber: changenumber,
-        query: query
-    });
+    var streams;
 
-    // transforms changelog entries to:
-    // obj {
-    //     user: UFDSClient User object,
-    //     changenumber: original changenumber
-    // }
-    var uus = new UfdsUserStream({
-        log: conf.log,
-        ufds: ufdsClient
-    });
-
-    // filters based on obj.user, does not alter objects.
-    var ufs = new UfdsFilterStream({
-        log: conf.log,
-        filter: function (user, cb) {
-            if (!user.dclocalconfig || !user.dclocalconfig.defaultFabricSetup) {
-                return cb(null, true);
+    function closePipeline() {
+        streams.forEach(function (stream) {
+            if (stream.hasOwnProperty('close')) {
+                stream.close();
             }
-            return cb(null, false);
-        }
-    });
+        });
+    }
 
-    var cns = new ChangenumberStartStream({
-        log: conf.log,
-        ufdsClient: ufdsClient,
-        url: conf.ufds.url,
-        checkpointDn: conf.checkpointDn,
-        component: 'ufdsWatcher'
-    });
+    function openPipeline() {
+        // connects to local ufds & streams changelog entries,
+        // emits changelogs of users & subusers
+        var cls = new ChangelogStream({
+            log: conf.log,
+            interval: conf.ufds.interval,
+            ufds: ufdsClient,
+            changenumber: changenumber,
+            query: query
+        });
 
-    // creates overlay network per config defaults, adds property to obj:
-    // {
-    //     defaultNetwork: UUID
-    // }
-    var fss = new NapiFabricSetupStream({
-        log: conf.log,
-        napi: conf.napi,
-        defaults: conf.defaults
-    });
-    fss.on('failure', cns.fail);
+        // transforms changelog entries to:
+        // obj {
+        //     user: UFDSClient User object,
+        //     changenumber: original changenumber
+        // }
+        var uus = new UfdsUserStream({
+            log: conf.log,
+            ufds: ufdsClient
+        });
 
-    // updates dclocalconfig in UFDS to indicate we've set up an overlay.
-    // updates obj.user.
-    var uws = new UfdsWriteStream({
-        log: conf.log,
-        ufds: ufdsClient,
-        datacenter_name: conf.datacenter_name
-    });
-    uws.on('failure', cns.fail);
+        // filters based on obj.user, does not alter objects.
+        var ufs = new UfdsFilterStream({
+            log: conf.log,
+            filter: function (user, cb) {
+                if (!user.dclocalconfig || !user.dclocalconfig.defaultFabricSetup) {
+                    return cb(null, true);
+                }
+                return cb(null, false);
+            }
+        });
 
-    var cnf = new ChangenumberFinishStream({
-        log: conf.log
-    });
+        var cns = new ChangenumberStartStream({
+            log: conf.log,
+            ufdsClient: ufdsClient,
+            url: conf.ufds.url,
+            checkpointDn: conf.checkpointDn,
+            component: 'ufdsWatcher'
+        });
 
-    var ts = new TrivialStream();
+        // creates overlay network per config defaults, adds property to obj:
+        // {
+        //     defaultNetwork: UUID
+        // }
+        var fss = new NapiFabricSetupStream({
+            log: conf.log,
+            napi: conf.napi,
+            defaults: conf.defaults
+        });
+        fss.on('failure', cns.fail);
 
-    var altPipe = new vstream.PipelineStream({
-        streams: [cls, uus, ufs, cns, fss, uws, cnf],
-        streamOptions: { objectMode: true }
-    });
+        // updates dclocalconfig in UFDS to indicate we've set up an overlay.
+        // updates obj.user.
+        var uws = new UfdsWriteStream({
+            log: conf.log,
+            ufds: ufdsClient,
+            datacenter_name: conf.datacenter_name
+        });
+        uws.on('failure', cns.fail);
 
-    altPipe.on('error', function (err) {
-        conf.log.error(err, 'Pipeline error, what now? Make a new pipe?');
-    });
+        var cnf = new ChangenumberFinishStream({
+            log: conf.log
+        });
+        cnf.on('checkpoint', function updateCheckpoint(cp) {
+            checkpoint = cp;
+        });
 
-    altPipe.pipe(ts);
+        var ts = new TrivialStream();
 
-    // var pipeline = new DefaultFabricPipeline(opts);
+        streams = [cls, uus, ufs, cns, fss, uws, cnf];
+        var altPipe = new vstream.PipelineStream({
+            streams: streams,
+            streamOptions: { objectMode: true }
+        });
 
-    // emits 'finished' event with latest changenumber.
-    // var fin = new FinishStream();
+        altPipe.on('error', function (err) {
+            conf.log.error({
+                err: err
+            }, 'Pipeline error. Restarting at changenumber %s.', checkpoint);
 
-    // error handling needs to be at this point.
-    // if any of them close, they'll all close; does this emit close over
-    // and over?
-    // or is 'err' better here? Both might apply.
-    // Either way, we want to have something like:
+        });
 
-    // function makePipe() {
-    //     var restart = once(restartPipe);
-
-    //     // new streams each time, use the changenumber
-    //     //we maintain from the final one.
-
-    //     cls.on('close', restart);
-    //     uus.on('close', restart);
-    //     // ...
-    //     var pipe = cls.pipe(uus).pipe(ts)
-    // }
-
-    // function restartPipe() {
-    //     // remove all close/error listeners, because they were once'd
-    //     // set them up again & refire.
-    //     cls.removeAllListeners('close');
-    //     // ...
-    //     makePipe();
-    // }
+        altPipe.pipe(ts);
+    }
 }
 main();
