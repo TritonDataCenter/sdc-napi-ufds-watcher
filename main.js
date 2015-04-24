@@ -139,11 +139,13 @@ function main() {
         ufdsClient.on('close', function () {
             conf.log.warn('UFDS: disconnected');
             closePipeline();
+            setImmediate(function () {
+                openPipeline();
+            });
         });
 
         ufdsClient.on('connect', function () {
             conf.log.info('UFDS: reconnected');
-            openPipeline();
         });
 
         openPipeline();
