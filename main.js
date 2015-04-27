@@ -38,6 +38,7 @@ var ChangenumberFinishStream = require('./lib/changenumber-finish-stream');
 var ME = mod_path.basename(process.argv[1]);
 var query = '(&(changetype=add)(targetdn=uuid=*)' +
     '(targetdn=*ou=users, o=smartdc))';
+var SMF_EXIT_NODAEMON = 94;
 
 
 // --- Exports
@@ -81,11 +82,17 @@ function main() {
     }
 
     var conf = require(mod_path.resolve(opts.file));
+
     conf.log = mod_bunyan.createLogger({
         name: 'napi-ufds-watcher',
         level: conf.logLevel || 'debug',
         serializers: sdcSerializers.extend(restifySerializers)
     });
+
+    if (!conf.overlay.enabled) {
+        conf.log.fatal('Fabric support not enabled, exiting.');
+        process.exit(SMF_EXIT_NODAEMON);
+    }
 
     var changenumber = 0;
     var checkpoint;
@@ -193,7 +200,7 @@ function main() {
         var fss = new NapiFabricSetupStream({
             log: conf.log,
             napi: conf.napi,
-            defaults: conf.defaults
+            defaults: conf.overlay.defaults
         });
         fss.on('failure', cns.fail);
 
