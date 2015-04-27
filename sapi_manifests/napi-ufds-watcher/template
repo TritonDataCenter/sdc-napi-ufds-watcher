@@ -11,12 +11,19 @@
             "retries": 2
         }
     },
-    "defaults": {
-        "vlan": {
+    {{^fabric_cfg}}
+    "overlay" : {
+        "enabled": false
+    },
+    {{/fabric_cfg}}
+    {{#fabric_cfg}}
+    "overlay" : {
+        "enabled": true,
+        "default_vlan": {
             "name": "default",
             "vlan_id": 2
         },
-        "network": {
+        "default_network": {
             "name": "default",
             "subnet": "192.168.128.0/22",
             "provision_start_ip": "192.168.128.5",
@@ -26,6 +33,7 @@
             "vlan_id": 2
         }
     },
+    {{/fabric_cfg}}
     "datacenter_name": "{{{datacenter_name}}}",
     "ufds": {
         "url": "ldaps://{{{UFDS_SERVICE}}}",
