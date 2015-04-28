@@ -12,21 +12,19 @@
         }
     },
     "overlay" : {
-        "enabled": false,
-        "defaults": {
-            "vlan": {
-                "name": "default",
-                "vlan_id": 2
-            },
-            "network": {
-                "name": "default",
-                "subnet": "192.168.128.0/22",
-                "provision_start_ip": "192.168.128.5",
-                "provision_end_ip": "192.168.131.250",
-                "gateway": "192.168.128.1",
-                "resolvers": "8.8.8.8,8.8.4.4",
-                "vlan_id": 2
-            }
+        "enabled": true,
+        "default_vlan": {
+            "name": "default",
+            "vlan_id": 2
+        },
+        "default_network": {
+            "name": "default",
+            "subnet": "192.168.128.0/22",
+            "provision_start_ip": "192.168.128.5",
+            "provision_end_ip": "192.168.131.250",
+            "gateway": "192.168.128.1",
+            "resolvers": "8.8.8.8,8.8.4.4",
+            "vlan_id": 2
         }
     },
     "datacenter_name": "coal",

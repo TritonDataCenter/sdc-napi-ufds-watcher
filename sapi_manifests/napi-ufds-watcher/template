@@ -19,29 +19,11 @@
     {{#fabric_cfg}}
     "overlay" : {
         "enabled": true,
-        "defaults": {
-            "vlan": {
-                "name": "default",
-                "vlan_id": 2
-            },
-            "network": {
-                "name": "default",
-                "subnet": "192.168.128.0/22",
-                "provision_start_ip": "192.168.128.5",
-                "provision_end_ip": "192.168.131.250",
-                "gateway": "192.168.128.1",
-                "resolvers": "{{{dns_resolvers}}}",
-                "vlan_id": 2
-            }
-        }
-    }
-    {{/fabric_cfg}}
-    "defaults": {
-        "vlan": {
+        "default_vlan": {
             "name": "default",
             "vlan_id": 2
         },
-        "network": {
+        "default_network": {
             "name": "default",
             "subnet": "192.168.128.0/22",
             "provision_start_ip": "192.168.128.5",
@@ -50,7 +32,8 @@
             "resolvers": "{{{dns_resolvers}}}",
             "vlan_id": 2
         }
-    },
+    }
+    {{/fabric_cfg}}
     "datacenter_name": "{{{datacenter_name}}}",
     "ufds": {
         "url": "ldaps://{{{UFDS_SERVICE}}}",

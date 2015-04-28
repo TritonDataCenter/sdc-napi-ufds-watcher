@@ -200,7 +200,8 @@ function main() {
         var fss = new NapiFabricSetupStream({
             log: conf.log,
             napi: conf.napi,
-            defaults: conf.overlay.defaults
+            default_vlan: conf.overlay.default_vlan,
+            default_network: conf.overlay.default_network
         });
         fss.on('failure', cns.fail);
 
