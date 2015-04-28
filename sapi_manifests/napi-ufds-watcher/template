@@ -32,7 +32,7 @@
             "resolvers": "{{{dns_resolvers}}}",
             "vlan_id": 2
         }
-    }
+    },
     {{/fabric_cfg}}
     "datacenter_name": "{{{datacenter_name}}}",
     "ufds": {

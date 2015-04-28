@@ -19,23 +19,23 @@ set -o errexit
 TOP=$(cd $(dirname $0)/../; pwd)
 NODE=$1
 
-if [[ -z "$NAPI_ZONE" ]]; then
-    NAPI_ZONE=$(ssh $NODE "/opt/smartdc/bin/sdc-vmapi /vms" 2>/dev/null \
-        | json -H -c 'this.tags && this.tags.smartdc_role === "napi"' \
+if [[ -z "$SDC_ZONE" ]]; then
+    SDC_ZONE=$(ssh $NODE "/opt/smartdc/bin/sdc-vmapi /vms" 2>/dev/null \
+        | json -H -c 'this.tags && this.tags.smartdc_role === "sdc"' \
             -c 'this.state === "running"' 0.uuid)
 fi
-echo "NAPI_ZONE: $NAPI_ZONE"
+echo "SDC_ZONE: $SDC_ZONE"
 
 extraOpts=
 if [[ $(uname -s) != "SunOS" ]]; then
     extraOpts="--exclude *.node --exclude build"
 else
     # Clean node_modules everytime.
-    ssh $NODE rm -rf /zones/$NAPI_ZONE/root/opt/smartdc/napi/napi-ufds-watcher/node_modules
+    ssh $NODE rm -rf /zones/$SDC_ZONE/root/opt/smartdc/napi-ufds-watcher/node_modules
 fi
 
 rsync -av ${TOP}/ \
-    $NODE:/zones/$NAPI_ZONE/root/opt/smartdc/napi/napi-ufds-watcher \
+    $NODE:/zones/$SDC_ZONE/root/opt/smartdc/napi-ufds-watcher \
     $extraOpts \
     --exclude .git/ \
     --exclude /etc/config.json \
@@ -44,19 +44,19 @@ rsync -av ${TOP}/ \
     --exclude /tools/ \
     --exclude /tmp/
 
-state=$(ssh ${NODE} "svcs -z ${NAPI_ZONE} -H -o state napi-ufds-watcher" || true)
+state=$(ssh ${NODE} "svcs -z ${SDC_ZONE} -H -o state napi-ufds-watcher" || true)
 
 if [[ -z $state ]]; then
     # state is empty, probably don't have smf yet.
-    ssh ${NODE} zlogin ${NAPI_ZONE} "svccfg import /opt/smartdc/napi/napi-ufds-watcher/smf/"
+    ssh ${NODE} zlogin ${SDC_ZONE} "svccfg import /opt/smartdc/napi-ufds-watcher/smf/manifests/napi-ufds-watcher.xml"
 elif [[ "$state" == "maintenance" ]]; then
-    ssh ${NODE} svcadm -z ${NAPI_ZONE} clear napi-ufds-watcher
+    ssh ${NODE} svcadm -z ${SDC_ZONE} clear napi-ufds-watcher
 else
-    ssh ${NODE} svcadm -z ${NAPI_ZONE} restart napi-ufds-watcher
+    ssh ${NODE} svcadm -z ${SDC_ZONE} restart napi-ufds-watcher
 fi
 
 # copy templates
-ssh ${NODE} cp -r /zones/${NAPI_ZONE}/root/opt/smartdc/napi/napi-ufds-watcher/sapi_manifests/napi-ufds-watcher \
-    /zones/${NAPI_ZONE}/root/opt/smartdc/napi/sapi_manifests
+ssh ${NODE} cp -r /zones/${SDC_ZONE}/root/opt/smartdc/napi-ufds-watcher/sapi_manifests/napi-ufds-watcher \
+    /zones/${SDC_ZONE}/root/opt/smartdc/sapi_manifests
 
-ssh ${NODE} svcadm -z ${NAPI_ZONE} restart config-agent
+ssh ${NODE} svcadm -z ${SDC_ZONE} restart config-agent
