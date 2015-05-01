@@ -3,7 +3,7 @@
         "concurrency": 10,
         "pollInterval": 5000
     },
-    "logLevel": "info",
+    "logLevel": "debug",
     "napi": {
         "url": "http://{{{NAPI_SERVICE}}}",
         "connectTimeout": 1000,
