@@ -36,8 +36,10 @@ var ChangenumberFinishStream = require('./lib/changenumber-finish-stream');
 // --- Globals
 
 var ME = mod_path.basename(process.argv[1]);
-var query = '(&(changetype=add)(targetdn=uuid=*)' +
-    '(targetdn=*ou=users, o=smartdc))';
+// this query currently filters out subusers; if we add them there will be
+// corresponding changes in ufds-user-stream to correctly retrieve them.
+var query = '(&(changetype=add)(targetdn=uuid=*ou=users, o=smartdc)' +
+    '(!(targetdn=uuid=*uuid=*)))';
 var SMF_EXIT_NODAEMON = 94;
 
 
