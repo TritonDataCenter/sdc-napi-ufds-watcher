@@ -30,7 +30,8 @@
             "provision_end_ip": "192.168.131.250",
             "gateway": "192.168.128.1",
             "resolvers": "{{{dns_resolvers}}}",
-            "vlan_id": 2
+            "vlan_id": 2,
+            "mtu": {{{default_overlay_mtu}}}
         }
     },
     {{/fabric_cfg}}
