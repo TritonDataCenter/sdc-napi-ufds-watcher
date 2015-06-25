@@ -20,11 +20,21 @@
     "overlay" : {
         "enabled": true,
         "default_vlan": {
-            "name": "default",
+            {{#fabric_cfg.default_vlan_name}}
+            "name": "{{fabric_cfg.default_vlan_name}}",
+            {{/fabric_cfg.default_vlan_name}}
+            {{^fabric_cfg.default_vlan_name}}
+            "name": "My-Fabric-VLAN",
+            {{/fabric_cfg.default_vlan_name}}
             "vlan_id": 2
         },
         "default_network": {
-            "name": "default",
+            {{#fabric_cfg.default_network_name}}
+            "name": "{{fabric_cfg.default_network_name}}",
+            {{/fabric_cfg.default_network_name}}
+            {{^fabric_cfg.default_network_name}}
+            "name": "My-Fabric-Network",
+            {{/fabric_cfg.default_network_name}}
             "subnet": "192.168.128.0/22",
             "provision_start_ip": "192.168.128.5",
             "provision_end_ip": "192.168.131.250",
