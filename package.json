@@ -1,7 +1,7 @@
 {
   "name": "napi-ufds-watcher",
   "description": "Watches UFDS for new users and provisions networks",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "Joyent (joyent.com)",
   "private": true,
   "dependencies": {
@@ -10,13 +10,13 @@
     "bunyan": "1.3.3",
     "clone": "0.2.0",
     "dashdash": "1.7.3",
-    "ldapjs": "git+https://github.com/mcavage/node-ldapjs.git#91f523af87936e9fe09a23d73d42fc339e60d8c3",
+    "ldapjs": "git+https://github.com/joyent/node-ldapjs.git#b13e50a",
     "ldap-filter": "0.2.0",
     "node-uuid": "1.2.0",
     "restify": "^2.8.4",
-    "sdc-clients": "git+https://github.com/joyent/node-sdc-clients.git#121bd66",
-    "sdc-bunyan-serializers": "git+https://github.com/joyent/sdc-bunyan-serializers.git#cc78f27bf7",
-    "ufds": "git+https://github.com/joyent/node-ufds.git#c7aa5635871aad7a630c897be2fcf059fed2e9dd",
+    "sdc-clients": "13.0.5",
+    "sdc-bunyan-serializers": "git+https://github.com/joyent/sdc-bunyan-serializers.git#8fdb844",
+    "ufds": "1.7.1",
     "vasync": "1.6.2",
     "vstream": "0.1.0"
   },
