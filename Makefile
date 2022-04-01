@@ -5,7 +5,7 @@
 #
 
 #
-# Copyright (c) 2018, Joyent, Inc.
+# Copyright 2022 Joyent, Inc.
 #
 
 #
@@ -47,8 +47,10 @@ include ./tools/mk/Makefile.defs
 ifeq ($(shell uname -s),SunOS)
 	include ./tools/mk/Makefile.node_prebuilt.defs
 else
-	NPM_EXEC :=
-	NPM = npm
+	NPM=npm
+	NODE=node
+	NPM_EXEC=$(shell which npm)
+	NODE_EXEC=$(shell which node)
 endif
 include ./tools/mk/Makefile.smf.defs
 

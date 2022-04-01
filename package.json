@@ -1,7 +1,7 @@
 {
   "name": "napi-ufds-watcher",
   "description": "Watches UFDS for new users and provisions networks",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": "Joyent (joyent.com)",
   "private": true,
   "dependencies": {
